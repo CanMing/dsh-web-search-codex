@@ -1,3 +1,12 @@
+# Release 0.2.2-rc.1
+
+Adaptation for DeepSeek Harness desktop **0.2.2-rc.1**.
+
+- Rename the package from `dsh-web-search-codex-020` to `dsh-web-search-codex`. The npm package of that name (0.1.2) belongs to the upstream project; this plugin is distributed through GitHub Releases, not npm.
+- Align the plugin manifest, DSH host peers, UI-primitives development package, runtime checks and bundle metadata with rc.1: Cordis 4.1.0, Schemastery 3.19.0, cordis-plugin-loader 1.1.0.
+- Keep the `web-search-codex` configuration namespace, `codex-local` provider ID and `CODEX_SEARCH_API_KEY` default credential reference unchanged.
+- Revalidate provider registration, dynamic settings, compatibility admission, settings form saves and Responses transport against the rc.1 packages. **43 automated tests pass**.
+
 # Release 0.2.1-rc.5
 
 Adaptation for DeepSeek Harness desktop **0.2.1-rc.5**.

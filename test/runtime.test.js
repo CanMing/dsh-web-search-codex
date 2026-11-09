@@ -116,12 +116,12 @@ async function loadProvider(runtime, config = initialConfig, id = 'web-search-co
   return entry;
 }
 
-test('uses the actual DSH 0.2.1-rc.5 runtime package versions', async () => {
+test('uses the actual DSH 0.2.2-rc.1 runtime package versions', async () => {
   const expected = {
-    '@deepseek-ai/cordis': '4.0.5',
-    '@deepseek-ai/schemastery': '3.18.5',
-    '@deepseek-ai/dsh-web': '0.2.1-rc.5',
-    '@deepseek-ai/cordis-plugin-loader': '1.0.6',
+    '@deepseek-ai/cordis': '4.1.0',
+    '@deepseek-ai/schemastery': '3.19.0',
+    '@deepseek-ai/dsh-web': '0.2.2-rc.1',
+    '@deepseek-ai/cordis-plugin-loader': '1.1.0',
   };
   for (const [name, version] of Object.entries(expected)) {
     const actual = JSON.parse(await readFile(require.resolve(`${name}/package.json`), 'utf8'));
@@ -129,21 +129,21 @@ test('uses the actual DSH 0.2.1-rc.5 runtime package versions', async () => {
   }
 });
 
-test('published manifest passes the rc.5 compatibility gate without an exemption', async () => {
+test('published manifest passes the rc.1 compatibility gate without an exemption', async () => {
   const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(getDshRuntimeVersion(), '0.2.1-rc.5');
-  assert.equal(manifest.version, '0.2.1-rc.5');
-  assert.equal(manifest.engines.dsh, '0.2.1-rc.5');
+  assert.equal(getDshRuntimeVersion(), '0.2.2-rc.1');
+  assert.equal(manifest.version, '0.2.2-rc.1');
+  assert.equal(manifest.engines.dsh, '0.2.2-rc.1');
   assert.equal(evaluatePluginCompatibility(manifest), undefined);
   const { dsh, ...otherEngines } = manifest.engines;
   assert.equal(evaluatePluginCompatibility({ ...manifest, engines: otherEngines }), undefined,
-    'Host peers must also satisfy rc.5; engines.dsh must not hide old dependencies');
+    'Host peers must also satisfy rc.1; engines.dsh must not hide old dependencies');
   assert.equal(manifest.peerDependencies['@deepseek-ai/dsh-client-ui-primitives'], undefined,
     'UI primitives are supplied by shell seeds, not the host package resolver');
-  assert.equal(manifest.devDependencies['@deepseek-ai/dsh-client-ui-primitives'], '0.2.1-rc.5');
-  for (const runtimeVersion of ['0.2.0-rc.2', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1', '0.3.0']) {
+  assert.equal(manifest.devDependencies['@deepseek-ai/dsh-client-ui-primitives'], '0.2.2-rc.1');
+  for (const runtimeVersion of ['0.2.1-rc.5', '0.2.2-alpha.2', '0.2.2-alpha.3', '0.2.2', '0.3.0']) {
     const issue = evaluatePluginCompatibility(manifest, {}, runtimeVersion);
-    assert.deepEqual(issue.requirements, { 'engines.dsh': '0.2.1-rc.5' });
+    assert.deepEqual(issue.requirements, { 'engines.dsh': '0.2.2-rc.1' });
     assert.equal(issue.exempted, false, 'Untested runtimes must not be silently accepted');
   }
 });
@@ -204,7 +204,7 @@ test('Loader volatile update keeps references and provider identity while next s
   const registrations = t.mock.method(runtime.web, 'registerSearchProvider');
   const entry = await loadProvider(runtime);
   const fiber = entry.fiber;
-  const config = fiber.config;
+  const config = fiber.effectiveConfig;
   const refs = Object.fromEntries(fields.map(field => [field, config[field]]));
   const provider = runtime.web.searchProviders.get('codex-local');
   await runtime.web.search({ query: 'before dynamic update' });
@@ -225,11 +225,11 @@ test('Loader volatile update keeps references and provider identity while next s
   await runtime.loader.await();
   await fiber.await();
   assert.equal(entry.fiber, fiber);
-  assert.equal(fiber.config, config);
+  assert.equal(fiber.effectiveConfig, config);
   assert.equal(runtime.web.searchProviders.get('codex-local'), provider);
   assert.equal(registrations.mock.callCount(), 1, 'Volatile update must not register again');
   for (const field of fields) {
-    assert.equal(fiber.config[field], refs[field], `${field} reference must retain identity`);
+    assert.equal(fiber.effectiveConfig[field], refs[field], `${field} reference must retain identity`);
     assert.equal(refs[field].get(), next[field], `${field} must expose the updated value`);
   }
   assert.equal(volatileEvents.length, 1);
@@ -254,7 +254,7 @@ test('invalid volatile candidate keeps the running values and provider usable', 
   const runtime = await createRuntime(t);
   const entry = await loadProvider(runtime);
   const provider = runtime.web.searchProviders.get('codex-local');
-  const timeoutRef = entry.fiber.config.timeoutMs;
+  const timeoutRef = entry.fiber.effectiveConfig.timeoutMs;
   await runtime.loader.update(entry.id, { config: { ...initialConfig, timeoutMs: 0 } });
   await runtime.loader.await();
   await entry.fiber.await();
@@ -265,7 +265,7 @@ test('invalid volatile candidate keeps the running values and provider usable', 
   assert.equal(calls.length, 1);
 });
 
-test('rc.5 WebRuntime caps structured sources and forwards caller cancellation', async t => {
+test('rc.1 WebRuntime caps structured sources and forwards caller cancellation', async t => {
   const response = completedResponse();
   response.output[0].action.sources.push({ url: 'https://example.invalid/second', title: 'Second source' });
   const calls = stubFetch(t, [response]);

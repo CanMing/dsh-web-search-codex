@@ -17,7 +17,7 @@ test('client builds identically from LF and Windows CRLF checkouts', t => {
     rmSync(resolved, { recursive: true });
   });
   mkdirSync(path.join(fixture, 'scripts'));
-  writeFileSync(path.join(fixture, 'package.json'), JSON.stringify({ name: 'dsh-web-search-codex-020', type: 'module' }));
+  writeFileSync(path.join(fixture, 'package.json'), JSON.stringify({ name: 'dsh-web-search-codex', type: 'module' }));
   writeFileSync(path.join(fixture, 'scripts/build-client.mjs'), readFileSync(new URL('../scripts/build-client.mjs', import.meta.url)));
   const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
   const builds = [];

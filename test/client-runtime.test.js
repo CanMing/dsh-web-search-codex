@@ -59,7 +59,7 @@ let registration;
 new vm.Script(readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8'), {
   filename: 'lib/client.js',
 }).runInNewContext({ URL, window: { __ModuleLoader__: { load(value) { registration = value; } } } });
-assert.equal(registration.id, 'dsh-web-search-codex-020');
+assert.equal(registration.id, 'dsh-web-search-codex');
 const client = registration.factory((specifier) => {
   if (specifier === 'react') return React;
   if (specifier === PRIMITIVES) return primitives;
@@ -134,9 +134,9 @@ async function setup(t) {
   return { controller, scope, keys, writes, failNextKeyWrite() { failNextKey = true; } };
 }
 
-test('rc.5 published SettingsFormModel runs inside the generated client factory with real React', async (t) => {
+test('rc.1 published SettingsFormModel runs inside the generated client factory with real React', async (t) => {
   t.diagnostic(`Primitives loading: ${loaded.mode}; scope/RPC are fixtures; slots/DOM are outside this test.`);
-  assert.equal(packageManifest.version, '0.2.1-rc.5');
+  assert.equal(packageManifest.version, '0.2.2-rc.1');
   for (const name of ['Button', 'Tag', 'SettingsForm', 'SettingsSecretField', 'SettingsValueField',
     'SettingsFormModel', 'settingsTextField', 'settingsNumberField']) assert.ok(primitives[name], name);
   const { controller } = await setup(t);
