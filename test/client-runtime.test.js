@@ -134,9 +134,9 @@ async function setup(t) {
   return { controller, scope, keys, writes, failNextKeyWrite() { failNextKey = true; } };
 }
 
-test('rc.1 published SettingsFormModel runs inside the generated client factory with real React', async (t) => {
+test('rc.3 published SettingsFormModel runs inside the generated client factory with real React', async (t) => {
   t.diagnostic(`Primitives loading: ${loaded.mode}; scope/RPC are fixtures; slots/DOM are outside this test.`);
-  assert.equal(packageManifest.version, '0.2.2-rc.1');
+  assert.equal(packageManifest.version, '0.2.2-rc.3');
   for (const name of ['Button', 'Tag', 'SettingsForm', 'SettingsSecretField', 'SettingsValueField',
     'SettingsFormModel', 'settingsTextField', 'settingsNumberField']) assert.ok(primitives[name], name);
   const { controller } = await setup(t);

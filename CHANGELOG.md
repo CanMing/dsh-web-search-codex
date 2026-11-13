@@ -1,3 +1,12 @@
+# Release 0.2.2-rc.3
+
+Adaptation for DeepSeek Harness desktop **0.2.2-rc.3**.
+
+- Align the plugin manifest, DSH host peers, UI-primitives development package, runtime checks and bundle metadata with rc.3.
+- No provider, settings or transport code change was needed: the rc.1 surfaces this plugin uses (`web` service, `configForms`, credentials, official client slots) remain compatible in rc.3.
+- Revalidated registration, volatile settings, compatibility admission, settings form saves and Responses transport against the rc.3 packages. **43 automated tests pass**.
+- `engines.dsh` intentionally admits only `0.2.2-rc.3`; earlier releases stay on their own plugin builds.
+
 # Release 0.2.2-rc.1
 
 Adaptation for DeepSeek Harness desktop **0.2.2-rc.1**.
