@@ -1,3 +1,13 @@
+# Release 0.2.2-rc.5
+
+Adaptation for DeepSeek Harness desktop **0.2.2-rc.5**.
+
+- Align the plugin manifest, DSH host peers, UI-primitives development package, runtime checks, transport user-agent and bundle metadata with rc.5.
+- No provider, settings or transport code change was needed. Compared the rc.3 and rc.5 packages this plugin touches: UI primitives, `dsh-client-ui-settings`, `dsh-client-ui-conversation`, `dsh-client-ui-plugin-manager`, client locale, credentials, launch environment, app boot and the host web server changed only their own version, so `configForms`, credential references and official client slots are unchanged.
+- One seam behaviour did change in `dsh-web`: while no `searchProvider` is configured, rc.5 first prefers the DeepSeek search provider assigned to the route of the model request instead of auto-selecting the single usable provider, and `WebSearchRequest` gained an optional `llmProvider` field. This bundle pins `searchProvider: codex-local`, which still wins, so `codex-local` keeps serving both `web.search()` and the official `web_search` tool. README documents the new fallback order.
+- Revalidated registration, volatile settings, compatibility admission, settings form saves and Responses transport against the rc.5 packages. Two new runtime tests pin the seam behaviour: a configured `codex-local` keeps winning while `deepseek-official` or `deepseek-search-api` are registered and usable, and an unconfigured `web` does switch to `deepseek-search-api`, which is why the bundle patch must stay. **45 automated tests pass**.
+- `engines.dsh` intentionally admits only `0.2.2-rc.5`. An rc.3 plugin build is rejected by the rc.5 gate, so users must upgrade both together.
+
 # Release 0.2.2-rc.3
 
 Adaptation for DeepSeek Harness desktop **0.2.2-rc.3**.

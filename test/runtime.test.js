@@ -116,11 +116,11 @@ async function loadProvider(runtime, config = initialConfig, id = 'web-search-co
   return entry;
 }
 
-test('uses the actual DSH 0.2.2-rc.3 runtime package versions', async () => {
+test('uses the actual DSH 0.2.2-rc.5 runtime package versions', async () => {
   const expected = {
     '@deepseek-ai/cordis': '4.1.0',
     '@deepseek-ai/schemastery': '3.19.0',
-    '@deepseek-ai/dsh-web': '0.2.2-rc.3',
+    '@deepseek-ai/dsh-web': '0.2.2-rc.5',
     '@deepseek-ai/cordis-plugin-loader': '1.1.0',
   };
   for (const [name, version] of Object.entries(expected)) {
@@ -129,21 +129,21 @@ test('uses the actual DSH 0.2.2-rc.3 runtime package versions', async () => {
   }
 });
 
-test('published manifest passes the rc.3 compatibility gate without an exemption', async () => {
+test('published manifest passes the rc.5 compatibility gate without an exemption', async () => {
   const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(getDshRuntimeVersion(), '0.2.2-rc.3');
-  assert.equal(manifest.version, '0.2.2-rc.3');
-  assert.equal(manifest.engines.dsh, '0.2.2-rc.3');
+  assert.equal(getDshRuntimeVersion(), '0.2.2-rc.5');
+  assert.equal(manifest.version, '0.2.2-rc.5');
+  assert.equal(manifest.engines.dsh, '0.2.2-rc.5');
   assert.equal(evaluatePluginCompatibility(manifest), undefined);
   const { dsh, ...otherEngines } = manifest.engines;
   assert.equal(evaluatePluginCompatibility({ ...manifest, engines: otherEngines }), undefined,
-    'Host peers must also satisfy rc.3; engines.dsh must not hide old dependencies');
+    'Host peers must also satisfy rc.5; engines.dsh must not hide old dependencies');
   assert.equal(manifest.peerDependencies['@deepseek-ai/dsh-client-ui-primitives'], undefined,
     'UI primitives are supplied by shell seeds, not the host package resolver');
-  assert.equal(manifest.devDependencies['@deepseek-ai/dsh-client-ui-primitives'], '0.2.2-rc.3');
-  for (const runtimeVersion of ['0.2.1-rc.5', '0.2.2-alpha.2', '0.2.2-alpha.3', '0.2.2-rc.1', '0.2.2', '0.3.0']) {
+  assert.equal(manifest.devDependencies['@deepseek-ai/dsh-client-ui-primitives'], '0.2.2-rc.5');
+  for (const runtimeVersion of ['0.2.1-rc.5', '0.2.2-alpha.2', '0.2.2-alpha.3', '0.2.2-rc.1', '0.2.2-rc.3', '0.2.2', '0.3.0']) {
     const issue = evaluatePluginCompatibility(manifest, {}, runtimeVersion);
-    assert.deepEqual(issue.requirements, { 'engines.dsh': '0.2.2-rc.3' });
+    assert.deepEqual(issue.requirements, { 'engines.dsh': '0.2.2-rc.5' });
     assert.equal(issue.exempted, false, 'Untested runtimes must not be silently accepted');
   }
 });
@@ -265,7 +265,7 @@ test('invalid volatile candidate keeps the running values and provider usable', 
   assert.equal(calls.length, 1);
 });
 
-test('rc.3 WebRuntime caps structured sources and forwards caller cancellation', async t => {
+test('rc.5 WebRuntime caps structured sources and forwards caller cancellation', async t => {
   const response = completedResponse();
   response.output[0].action.sources.push({ url: 'https://example.invalid/second', title: 'Second source' });
   const calls = stubFetch(t, [response]);
@@ -311,4 +311,35 @@ test('bundle patch composes with real DSH semantics and explicitly selects codex
   assert.equal(runtime.web.searchProviders.get('codex-local').id, 'codex-local');
   assert.equal(otherSearch.mock.callCount(), 0);
   assert.equal(calls.length, 1);
+});
+
+test('rc.5 route-preferred DeepSeek providers cannot displace the configured codex-local', async t => {
+  const calls = stubFetch(t);
+  // rc.5 prefers the DeepSeek search provider of the model route only while no
+  // search provider is configured. The bundle patch pins one, so it must still win.
+  const runtime = await createRuntime(t);
+  await loadProvider(runtime);
+  const preferred = t.mock.fn(async () => {
+    throw new Error('rc.5 route preference displaced the configured provider');
+  });
+  for (const id of ['deepseek-official', 'deepseek-search-api']) {
+    runtime.web.registerSearchProvider({ id, available: () => true, search: preferred });
+  }
+  assert.equal(runtime.web.config.searchProvider.get(), 'codex-local');
+  const result = await runtime.web.search({ query: 'configured provider wins', llmProvider: 'deepseek-official' });
+  assert.equal(result.content, 'Runtime search answer');
+  assert.equal(preferred.mock.callCount(), 0);
+  assert.equal(calls.length, 1);
+});
+
+test('rc.5 prefers a DeepSeek search provider when no search provider is configured', async t => {
+  // Documents the rc.5 selection order that the bundle patch exists to override.
+  const runtime = await createRuntime(t, {});
+  await loadProvider(runtime);
+  const builtIn = t.mock.fn(async () => ({ sources: [{ url: 'https://builtin.invalid/' }], truncated: false }));
+  runtime.web.registerSearchProvider({ id: 'deepseek-search-api', available: () => true, search: builtIn });
+  assert.equal(runtime.web.config.searchProvider.get(), undefined);
+  const result = await runtime.web.search({ query: 'unconfigured route preference' });
+  assert.equal(builtIn.mock.callCount(), 1);
+  assert.deepEqual(result.sources, [{ url: 'https://builtin.invalid/' }]);
 });
